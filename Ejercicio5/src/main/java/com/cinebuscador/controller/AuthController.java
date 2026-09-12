@@ -32,9 +32,8 @@ public class AuthController {
         User user = userRepository.findByUsername(username).orElse(null);
 
         if (user != null) {
-            // Descifrar la contraseña almacenada y comparar con la ingresada
-            String decryptedPassword = EncryptionService.decrypt(user.getPassword());
-            if (password.equals(decryptedPassword)) {
+            // Comparar la contraseña ingresada contra el hash almacenado
+            if (EncryptionService.matches(password, user.getPassword())) {
                 model.addAttribute("loginSuccess", true);
                 model.addAttribute("welcomeUser", username);
                 model.addAttribute("encryptedPassword", user.getPassword());

@@ -21,14 +21,8 @@ public class SpelEvaluator {
         org.springframework.expression.EvaluationContext context =
             SimpleEvaluationContext.forReadOnlyDataBinding().build();
 
-        StandardEvaluationContext standardContext = new StandardEvaluationContext();
-
-
-        standardContext.setVariable("system", System.class);
-        standardContext.setVariable("runtime", Runtime.class);
-
         var expr = parser.parseExpression(expression);
-        Object result = expr.getValue(standardContext);
+        Object result = expr.getValue(context);
 
         return result != null ? result.toString() : "";
     }

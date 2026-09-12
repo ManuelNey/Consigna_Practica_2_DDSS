@@ -1,0 +1,1 @@
+Esto debería ser una imagen pero no lo es, por lo tanto el servidor debería no aceptarlo.

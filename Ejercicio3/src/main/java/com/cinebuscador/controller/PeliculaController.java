@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Controller
 public class PeliculaController {
@@ -85,7 +86,18 @@ public class PeliculaController {
         Pelicula pelicula = peliculaRepo.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Pelicula no encontrada"));
 
-        String filename = archivo.getOriginalFilename();
+        String originalFilename = archivo.getOriginalFilename();
+
+        String tipoArchivo = ""; //Sacamos que extension tiene el archivo
+        if (originalFilename != null && originalFilename.contains(".")){
+            tipoArchivo = originalFilename.substring(originalFilename.lastIndexOf(".")+ 1).toLowerCase();
+        }
+
+        List<String> tipoArchivosValidos = List.of("jpg", "jpeg", "png"); //Definimos los tipo de archivos validos
+        if (!tipoArchivosValidos.contains(tipoArchivo)){
+            throw new IllegalArgumentException("EL tipo de archivo no es válido");
+        }
+        String filename = UUID.randomUUID() + "." + tipoArchivo; // Generamos un nombre distinto al que subio el usuario
         Path uploadPath = Paths.get(uploadDir);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
@@ -106,6 +118,16 @@ public class PeliculaController {
         MediaType mediaType = MediaTypeFactory.getMediaType(resource)
         .orElse(MediaType.APPLICATION_OCTET_STREAM);
 
+        String tipoArchivo = ""; //Sacamos que extension tiene el archivo
+        if (filename != null && filename.contains(".")){
+            tipoArchivo = filename.substring(filename.lastIndexOf(".")+ 1).toLowerCase();
+        }
+
+        List<String> tipoArchivosValidos = List.of("jpg", "jpeg", "png"); //Definimos los tipo de archivos validos
+        if (!tipoArchivosValidos.contains(tipoArchivo)){
+            return ResponseEntity.status(415).build(); // Error que indica que el tipo de archivo no es soportado
+        }
+        
         if (!resource.exists()) {
             return ResponseEntity.notFound().build();
         }
