@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
 import org.springframework.core.io.UrlResource;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.imageio.ImageIO;
 
 @Controller
 public class PeliculaController {
@@ -80,13 +83,14 @@ public class PeliculaController {
         return "upload";
     }
 
-    @PostMapping("/upload/{id}")
+        @PostMapping("/upload/{id}")
     public String uploadFile(@PathVariable Integer id,
                              @RequestParam("afiche") MultipartFile archivo) throws IOException {
         Pelicula pelicula = peliculaRepo.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Pelicula no encontrada"));
 
         String originalFilename = archivo.getOriginalFilename();
+        byte[] contenido = archivo.getBytes();
 
         String tipoArchivo = ""; //Sacamos que extension tiene el archivo
         if (originalFilename != null && originalFilename.contains(".")){
@@ -97,6 +101,16 @@ public class PeliculaController {
         if (!tipoArchivosValidos.contains(tipoArchivo)){
             throw new IllegalArgumentException("EL tipo de archivo no es válido");
         }
+
+        // La extension la controla el usuario y puede mentir: validamos tambien que el
+        // contenido real sea una imagen decodificable (chequeo de "magic bytes"), no
+        // texto/HTML disfrazado con un nombre .png/.jpg. Se hace despues del chequeo de
+        // extension para no decodificar archivos que ya sabemos que hay que rechazar.
+        // Limite conocido: un poliglota (imagen valida con HTML agregado al final) pasa.
+        if (ImageIO.read(new ByteArrayInputStream(contenido)) == null) {
+            throw new IllegalArgumentException("El archivo no es una imagen válida");
+        }
+
         String filename = UUID.randomUUID() + "." + tipoArchivo; // Generamos un nombre distinto al que subio el usuario
         Path uploadPath = Paths.get(uploadDir);
         if (!Files.exists(uploadPath)) {
